@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1744055772148,
+      "tag": "0000_free_pandemic",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1744068057227,
+      "tag": "0001_cultured_scarlet_spider",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1744070840559,
+      "tag": "0002_fluffy_night_nurse",
+      "breakpoints": true
+    }
+  ]
+}
