@@ -2,5 +2,5 @@
   "schema": "./src/database/schema.ts",
   "dialect": "postgresql",
   "out": "./drizzle",
-  "connectionString": "postgres://postgres:postgres@localhost:5432/educabrasil"
+  "url": "postgres://postgres:postgres@localhost:5432/educabrasil?sslmode=disable"
 }

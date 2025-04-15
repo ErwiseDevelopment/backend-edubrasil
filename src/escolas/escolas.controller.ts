@@ -24,7 +24,7 @@ export class EscolasController {
   async findOne(@Param('id') id: number) {
     return await this.escolasService.findOne(id);
   }
-
+  
   // Rota para atualizar uma escola
   @Put(':id')
   async update(@Param('id') id: number, @Body() updateEscolaDto: UpdateEscolaDto) {

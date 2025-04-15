@@ -37,6 +37,7 @@ export const escolas = pgTable('escolas', {
 // Tabela periodos_escolares
 export const periodos_escolares = pgTable('periodos_escolares', {
   periodos_escolares_id: serial('periodos_escolares_id').primaryKey(),
+  periodos_escolares_escola_id: integer('periodos_escolares_escola_id').notNull(), // Adicionar este campo
   periodos_escolares_ano: integer('periodos_escolares_ano').notNull(),
   periodos_escolares_bimestre: integer('periodos_escolares_bimestre').notNull(),
   periodos_escolares_data_inicio: date('periodos_escolares_data_inicio').notNull(),

@@ -1,0 +1,1 @@
+ALTER TABLE "periodos_escolares" ADD COLUMN "periodos_escolares_escola_id" integer NOT NULL;
