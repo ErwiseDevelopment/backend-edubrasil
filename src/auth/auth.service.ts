@@ -1,7 +1,6 @@
-// src/auth/auth.service.ts
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { UsuariosService } from '../usuarios/usuarios.service'; // Serviço de usuários para buscar o usuário
+import { UsuariosService } from '../usuarios/usuarios.service'; 
 import { LoginDto } from './dto/login.dto';
 
 @Injectable()
@@ -14,13 +13,20 @@ export class AuthService {
   // Valida as credenciais do usuário
   async validateUser(email: string, senha: string): Promise<any> {
     const user = await this.usuariosService.findByEmail(email);
-    // Aqui, em um cenário real, você deve comparar a senha usando bcrypt.compare
-    if (user && user.usuarios_senha === senha) {
-      // Retorne os dados do usuário (omitindo a senha, por exemplo)
-      const { usuarios_senha, ...result } = user;
-      return result;
+    
+    if (!user) {
+      return null;  // Retorna null se não encontrar o usuário
     }
-    return null;
+
+    // Comparação de senha utilizando bcrypt
+    const isPasswordValid = await this.usuariosService.comparePassword(senha, user.usuarios_senha);
+    
+    if (!isPasswordValid) {
+      return null;  // Se a senha não for válida, retorna null
+    }
+
+    const { usuarios_senha, ...result } = user;  // Omitindo a senha do retorno
+    return result;
   }
 
   // Realiza o login e gera o token JWT
@@ -29,8 +35,13 @@ export class AuthService {
     if (!user) {
       throw new UnauthorizedException('Credenciais inválidas');
     }
-    // Cria o payload com os dados que deseja incluir no token (por exemplo, id, email, role)
-    const payload = { sub: user.usuarios_id, email: user.usuarios_email, role: user.usuarios_role };
+
+    const payload = { 
+      sub: user.usuarios_id, 
+      email: user.usuarios_email, 
+      roles: user.usuarios_role 
+    };
+
     return {
       access_token: this.jwtService.sign(payload),
     };

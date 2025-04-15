@@ -1,10 +1,10 @@
-// src/usuarios/usuarios.service.ts
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { db } from '../database/drizzle.config';
-import { usuarios, escolas } from '../database/schema';  // Importando a tabela de escolas para verificar a existência de uma escola
+import { usuarios, escolas } from '../database/schema'; 
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
 import { UpdateUsuarioDto } from './dto/update-usuario.dto';
-import { eq } from 'drizzle-orm'; // A importação do eq corretamente
+import { eq } from 'drizzle-orm'; 
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsuariosService {
@@ -12,12 +12,24 @@ export class UsuariosService {
   async create(dto: CreateUsuarioDto) {
     const { nome, email, senha, role, escola_id } = dto;
 
+    // Verificação se o email já existe
+    const existingUser = await db
+      .select()
+      .from(usuarios)
+      .where(eq(usuarios.usuarios_email, email))  // Verifica se já existe um usuário com esse email
+      .execute();
+
+    if (existingUser.length > 0) {
+      // Se o usuário com o mesmo email já existir, lança um erro de conflito (409)
+      throw new ConflictException('Email já está em uso!');
+    }
+
     // Verificação se a escola existe antes de criar o usuário
     if (escola_id) {
       const escola = await db
         .select()
         .from(escolas)
-        .where(eq(escolas.escolas_id, escola_id)) // Verifica se a escola existe no banco
+        .where(eq(escolas.escolas_id, escola_id)) 
         .limit(1)
         .execute();
 
@@ -26,17 +38,21 @@ export class UsuariosService {
       }
     }
 
+    // Hash da senha
+    const hashedPassword = await bcrypt.hash(senha, 10);  // 10 é o número de rounds de hash
+
     // Criação do usuário no banco de dados
     const result = await db
       .insert(usuarios)
       .values({
         usuarios_nome: nome,
         usuarios_email: email,
-        usuarios_senha: senha, // Em um cenário real, a senha deve ser hashada
-        usuarios_role: role,
+        usuarios_senha: hashedPassword,  // Armazenando a senha hashada
+        usuarios_role: Array.isArray(role) ? role : [role],  // Garantindo que role seja um array
         usuarios_escola_id: escola_id,
       })
-      .returning();  // Retorna o usuário recém-criado
+      .returning();  
+
     return result;
   }
 
@@ -50,8 +66,8 @@ export class UsuariosService {
     const user = await db
       .select()
       .from(usuarios)
-      .where(eq(usuarios.usuarios_id, id))  // A comparação usando 'eq' está correta
-      .execute(); // 'execute' é necessário no Drizzle ORM para executar a consulta
+      .where(eq(usuarios.usuarios_id, id))  
+      .execute(); 
     if (user.length === 0) {
       throw new NotFoundException('Usuário não encontrado');
     }
@@ -64,25 +80,31 @@ export class UsuariosService {
       .select()
       .from(usuarios)
       .where(eq(usuarios.usuarios_email, email))
-      .execute();  // 'execute' é necessário aqui também
-    return user.length > 0 ? user[0] : null;  // Se não encontrar, retorna null
+      .execute();  
+    return user.length > 0 ? user[0] : null;  
   }
 
   // Função para atualizar um usuário
   async update(id: number, dto: UpdateUsuarioDto) {
+    const { nome, email, senha, role, escola_id, status } = dto;
+
+    // Hash da senha se fornecida
+    const hashedPassword = senha ? await bcrypt.hash(senha, 10) : undefined;
+
     const result = await db
       .update(usuarios)
       .set({
-        usuarios_nome: dto.nome,
-        usuarios_email: dto.email,
-        usuarios_senha: dto.senha,
-        usuarios_role: dto.role,
-        usuarios_escola_id: dto.escola_id,
-        usuarios_status: dto.status,
+        usuarios_nome: nome,
+        usuarios_email: email,
+        usuarios_senha: hashedPassword || undefined,  // Atualiza apenas se senha for fornecida
+        usuarios_role: Array.isArray(role) ? role : [role],
+        usuarios_escola_id: escola_id,
+        usuarios_status: status,
         usuarios_updated_at: new Date(),
       })
-      .where(eq(usuarios.usuarios_id, id))  // A comparação de ID utilizando 'eq'
-      .returning();  // Retorna os dados do usuário atualizado
+      .where(eq(usuarios.usuarios_id, id))  
+      .returning();  
+
     return result;
   }
 
@@ -90,7 +112,12 @@ export class UsuariosService {
   async remove(id: number) {
     return await db
       .delete(usuarios)
-      .where(eq(usuarios.usuarios_id, id))  // A comparação de ID utilizando 'eq'
-      .execute();  // O 'execute' é necessário para deletar o usuário
+      .where(eq(usuarios.usuarios_id, id))  
+      .execute();  
+  }
+
+  // Função para comparar a senha durante o login
+  async comparePassword(password: string, hashedPassword: string): Promise<boolean> {
+    return await bcrypt.compare(password, hashedPassword);  // Comparando a senha com o hash armazenado
   }
 }

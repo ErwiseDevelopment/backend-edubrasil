@@ -63,7 +63,7 @@ export const usuarios = pgTable('usuarios', {
   usuarios_nome: varchar('usuarios_nome', { length: 255 }).notNull(),
   usuarios_email: varchar('usuarios_email', { length: 255 }).notNull(),
   usuarios_senha: varchar('usuarios_senha', { length: 255 }).notNull(),
-  usuarios_role: varchar('usuarios_role', { length: 50 }).notNull(),
+  usuarios_role: jsonb('usuarios_role').notNull(),  // Alterado para jsonb
   usuarios_escola_id: integer('usuarios_escola_id'),
   usuarios_status: boolean('usuarios_status').notNull().default(true),
   usuarios_created_at: timestamp('usuarios_created_at').defaultNow().notNull(),

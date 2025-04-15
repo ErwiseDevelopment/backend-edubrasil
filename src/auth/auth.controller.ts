@@ -1,16 +1,24 @@
-// src/auth/auth.controller.ts
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Get, Request } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
-import { Public } from './public.decorator';  // Importe o decorator
+import { JwtAuthGuard } from './jwt-auth.guard';
+import { RolesGuard } from './roles.guard';
+import { Roles } from './roles.decorator';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Public()
   @Post('login')
   async login(@Body() loginDto: LoginDto) {
-    return await this.authService.login(loginDto);
+    return this.authService.login(loginDto);
+  }
+
+  // Aplica o RolesGuard, e especifica que apenas usuários com a role 'gestor' ou 'coordenador' podem acessar
+  @UseGuards(JwtAuthGuard, RolesGuard)  // Aplica os guards de autenticação e roles
+  @Roles('gestor', 'coordenador')  // Restrição de roles para 'gestor' e 'coordenador'
+  @Get('profile')
+  getProfile(@Request() req) {
+    return req.user; // Retorna os dados do usuário, incluindo as roles
   }
 }
