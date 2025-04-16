@@ -1,10 +1,12 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { JwtAuthGuard } from './auth/jwt-auth.guard';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  // Remova a aplicação global do JwtAuthGuard aqui
+  
+  // Ativa o CORS com as configurações padrão
+  app.enableCors();
+  
   await app.listen(3000);
 }
 bootstrap();
