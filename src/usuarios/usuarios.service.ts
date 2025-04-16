@@ -121,3 +121,4 @@ export class UsuariosService {
     return await bcrypt.compare(password, hashedPassword);  // Comparando a senha com o hash armazenado
   }
 }
+  
